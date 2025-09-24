@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "express": "^5.1.0",
+    "mongoose": "^8.18.2",
     "uuid": "^13.0.0"
   }
 }
