@@ -1,13 +1,12 @@
 {
   "name": "fs_back_end",
   "version": "1.0.0",
-  "main": "src/index.js",
-  "type": "module",
+  "main": "src/index.ts",
   "scripts": {
     "dev": "nodemon src/index.ts",
-    "seed": "node src/infrastructure/seed.js",
+    "seed": "ts-node src/infrastructure/seed.ts",
     "build": "npm install && tsc",
-    "start": "node ./dist/index.js"
+    "start": "node ./dist/index.ts"
   },
   "author": "",
   "license": "ISC",
@@ -17,11 +16,12 @@
     "express": "^5.1.0",
     "mongodb": "^6.20.0",
     "mongoose": "^8.18.2",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "zod": "^4.1.12"
   },
   "devDependencies": {
     "@types/express": "^5.0.3",
-    "@types/node": "^24.7.1",
+    "@types/node": "^24.8.0",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"

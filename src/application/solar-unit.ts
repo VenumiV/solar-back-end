@@ -2,7 +2,7 @@ import { z } from "zod";
 import { CreateSolarUnitDto } from "../domain/dtos/solar-unit";
 import { SolarUnit } from "../infrastructure/entities/SolarUnit";
 import { NextFunction, Request, Response } from "express";
-import { NotFoundError, ValidationError } from "../domain/errors/errors";
+import { NotFoundError, ValidationError } from "../domain/errors/error";
 
 export const getAllSolarUnits = async (
   req: Request,
