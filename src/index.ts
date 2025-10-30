@@ -6,9 +6,11 @@ import { globalErrorHandler } from "./api/middlewares/global-error-handling-midd
 import { loggerMiddleware } from "./api/middlewares/logger-middleware";
 import solarUnitRouter from "./api/solar-units";
 import { connectDB } from "./infrastructure/db";
+import cors from "cors";
 
 const server = express();
 server.use(express.json());
+server.use(cors({ origin: "http://localhost:5173" }));
 
 server.use(loggerMiddleware);
 

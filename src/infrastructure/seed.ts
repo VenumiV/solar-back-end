@@ -34,7 +34,7 @@ async function seed() {
 
     // Create 10 sequential energy generation records every 2 hours
     const records = [];
-    const baseDate = new Date("2025-09-21T00:00:00Z");
+    const baseDate = new Date("2025-10-29T00:00:00Z");
     for (let i = 0; i < 10; i++) {
       records.push({
         solarUnitId: solarUnit._id,
