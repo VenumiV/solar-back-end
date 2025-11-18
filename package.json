@@ -4,6 +4,7 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "nodemon src/index.ts",
+    "dev:ngrok": "ngrok start back-end --config=ngrok.yml",
     "seed": "ts-node src/infrastructure/seed.ts",
     "build": "npm install && tsc",
     "start": "node ./dist/index.ts"
@@ -12,6 +13,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@clerk/express": "^1.7.50",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
