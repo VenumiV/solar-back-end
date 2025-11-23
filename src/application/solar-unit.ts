@@ -3,7 +3,7 @@ import { CreateSolarUnitDto } from "../domain/dtos/solar-unit";
 import { SolarUnit } from "../infrastructure/entities/SolarUnit";
 import { NextFunction, Request, Response } from "express";
 import { NotFoundError, ValidationError } from "../domain/errors/error";
-//import { getAuth } from "@clerk/express";
+import { getAuth } from "@clerk/express";
 import { User } from "../infrastructure/entities/User";
 
 export const getAllSolarUnits = async (
@@ -72,17 +72,16 @@ export const getSolarUnitById = async (
   }
 };
 
-export const getSolarUnitsByClerkUserId = async (
+export const getSolarUnitforUser = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    //const auth = getAuth(req);
-   // const clerkUserId = auth.userId;
-      const { clerkUserId } = req.params;
-      console.log(clerkUserId);
-      const user = await User.findOne({ clerkUserId });
+    const auth = getAuth(req);
+    const clerkUserId = auth.userId;
+    console.log(auth);
+    const user = await User.findOne({ clerkUserId });
       if (!user) {
         throw new NotFoundError("User not found");
     }
