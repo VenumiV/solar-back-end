@@ -6,7 +6,7 @@ import {UserPublicMetadata } from "../../domain/types";
 
 
 
-export const authenticationMiddleware = async (
+export const authorizationMiddleware = async (
     req: Request,
     res: Response,
     next: NextFunction
