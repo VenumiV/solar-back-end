@@ -35,6 +35,19 @@ webhooksRouter.post(
         });
       }
 
+      if (eventType === "user.updated") {
+        const { id } = evt.data;
+        const user = await User.findOneAndUpdate({ clerkUserId: id }, {
+          role: evt.data.public_metadata.role,
+        });
+      }
+
+      if (eventType === "user.deleted") {
+        const { id } = evt.data;
+        await User.findOneAndDelete({ clerkUserId: id });
+      }
+
+
       return res.send("Webhook received");
     } catch (err) {
       console.error("Error verifying webhook:", err);
