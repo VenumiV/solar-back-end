@@ -9,6 +9,7 @@ import { connectDB } from "./infrastructure/db";
 import cors from "cors";
 import webhooksRouter from "./api/webhooks";
 import { clerkMiddleware } from "@clerk/express";
+import usersRouter from "./api/users";
 
 const server = express();
 server.use(express.json());
@@ -24,6 +25,7 @@ server.use(express.json());
 
 server.use("/api/solar-units", solarUnitRouter);
 server.use("/api/energy-generation-records", energyGenerationRecordRouter);
+server.use("/api/users", usersRouter);
 
 
 

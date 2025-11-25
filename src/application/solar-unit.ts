@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { CreateSolarUnitDto } from "../domain/dtos/solar-unit";
+import { CreateSolarUnitDto, UpdateSolarUnitDto } from "../domain/dtos/solar-unit";
 import { SolarUnit } from "../infrastructure/entities/SolarUnit";
 import { NextFunction, Request, Response } from "express";
 import { NotFoundError, ValidationError } from "../domain/errors/error";
@@ -44,7 +44,7 @@ export const createSolarUnit = async (
       installationDate: new Date(data.installationDate),
       capacity: data.capacity,
       status: data.status,
-      userId: data.userId,
+      //userId: data.userId,
     };
 
     const createdSolarUnit = await SolarUnit.create(newSolarUnit);
@@ -93,6 +93,17 @@ export const getSolarUnitforUser = async (
   }
 };
 
+export const updateSolarUnitValidator = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const result = UpdateSolarUnitDto.safeParse(req.body);
+  if (!result.success) {
+    throw new ValidationError(result.error.message);
+  }
+  next();
+};
 
 export const updateSolarUnit = async (
   req: Request,
@@ -100,7 +111,7 @@ export const updateSolarUnit = async (
   next: NextFunction
 ) => {
   const { id } = req.params;
-  const { serialNumber, installationDate, capacity, status } = req.body;
+  const { serialNumber, installationDate, capacity, status,userId } = req.body;
   const solarUnit = await SolarUnit.findById(id);
 
   if (!solarUnit) {
@@ -112,6 +123,7 @@ export const updateSolarUnit = async (
     installationDate,
     capacity,
     status,
+  
   });
 
   res.status(200).json(updatedSolarUnit);
