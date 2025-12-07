@@ -10,6 +10,8 @@ import cors from "cors";
 import webhooksRouter from "./api/webhooks";
 import { clerkMiddleware } from "@clerk/express";
 import usersRouter from "./api/users";
+//import anomaliesRouter from "./api/anomalies";
+
 
 const server = express();
 server.use(express.json());
@@ -26,7 +28,7 @@ server.use(express.json());
 server.use("/api/solar-units", solarUnitRouter);
 server.use("/api/energy-generation-records", energyGenerationRecordRouter);
 server.use("/api/users", usersRouter);
-
+//server.use("/api/anomalies", anomaliesRouter);
 
 
 server.use(globalErrorHandler);
