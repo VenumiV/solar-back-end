@@ -20,3 +20,7 @@ export const GetAllEnergyGenerationRecordsQueryDto = z.object({
   groupBy: z.enum(["date"]).optional(),
   limit: z.string().min(1).optional(),
 });
+
+export const GetCapacityFactorQueryDto = z.object({
+  days: z.string().min(1).optional(),
+});
