@@ -191,6 +191,43 @@ export async function detectSensorErrors(
   const capacity = solarUnit.capacity; // in kW
   const maxPossibleDailyEnergy = capacity * 10; // Maximum possible (10 hours at 100%)
 
+  // Collect per-day sensor issues so we can group consecutive days into ranges
+  type DailyIssue = {
+    date: Date;
+    dateKey: string;
+    severity: "CRITICAL" | "WARNING";
+    messages: string[];
+    metadata: Record<string, any>[];
+  };
+
+  const dailyIssuesMap = new Map<string, DailyIssue>();
+
+  const addIssue = (
+    date: Date,
+    severity: "CRITICAL" | "WARNING",
+    message: string,
+    metadata: Record<string, any>
+  ) => {
+    const dateKey = new Date(date.toISOString().substring(0, 10)).toISOString();
+    const existing = dailyIssuesMap.get(dateKey);
+    if (!existing) {
+      dailyIssuesMap.set(dateKey, {
+        date,
+        dateKey,
+        severity,
+        messages: [message],
+        metadata: [metadata],
+      });
+    } else {
+      // Upgrade severity if needed (CRITICAL > WARNING)
+      if (severity === "CRITICAL") {
+        existing.severity = "CRITICAL";
+      }
+      existing.messages.push(message);
+      existing.metadata.push(metadata);
+    }
+  };
+
   // Check for impossible values
   for (const record of records) {
     const energy = record.totalEnergy || 0;
@@ -198,32 +235,32 @@ export async function detectSensorErrors(
 
     // Negative energy (impossible)
     if (energy < 0) {
-      anomalies.push({
-        anomalyType: "SENSOR_ERROR",
-        severity: "CRITICAL",
-        description: `Invalid sensor reading detected: ${energy} kWh (negative value). Sensor malfunction likely.`,
-        affectedStartDate: date,
-        affectedEndDate: date,
-        metadata: {
+      addIssue(
+        date,
+        "CRITICAL",
+        `Invalid sensor reading detected: ${energy} kWh (negative value). Sensor malfunction likely.`,
+        {
           invalidValue: energy,
           errorType: "NEGATIVE_VALUE",
-        },
-      });
+        }
+      );
     }
     // Impossible high value (exceeds theoretical maximum)
     else if (energy > maxPossibleDailyEnergy * 1.2) {
-      anomalies.push({
-        anomalyType: "SENSOR_ERROR",
-        severity: "CRITICAL",
-        description: `Impossible sensor reading detected: ${energy.toFixed(2)} kWh exceeds theoretical maximum of ${maxPossibleDailyEnergy.toFixed(2)} kWh by ${((energy / maxPossibleDailyEnergy - 1) * 100).toFixed(1)}%.`,
-        affectedStartDate: date,
-        affectedEndDate: date,
-        metadata: {
+      addIssue(
+        date,
+        "CRITICAL",
+        `Impossible sensor reading detected: ${energy.toFixed(
+          2
+        )} kWh exceeds theoretical maximum of ${maxPossibleDailyEnergy.toFixed(
+          2
+        )} kWh by ${((energy / maxPossibleDailyEnergy - 1) * 100).toFixed(1)}%.`,
+        {
           invalidValue: energy,
           theoreticalMax: maxPossibleDailyEnergy,
           errorType: "EXCEEDS_MAXIMUM",
-        },
-      });
+        }
+      );
     }
   }
 
@@ -239,20 +276,82 @@ export async function detectSensorErrors(
     const energy = record.totalEnergy || 0;
     if (energy < lowerBound || energy > upperBound) {
       const date = new Date(record._id.date);
-      anomalies.push({
-        anomalyType: "SENSOR_ERROR",
-        severity: "WARNING",
-        description: `Outlier reading detected: ${energy.toFixed(2)} kWh. Expected range: ${lowerBound.toFixed(2)} - ${upperBound.toFixed(2)} kWh. Possible sensor error.`,
-        affectedStartDate: date,
-        affectedEndDate: date,
-        metadata: {
+      addIssue(
+        date,
+        "WARNING",
+        `Outlier reading detected: ${energy.toFixed(
+          2
+        )} kWh. Expected range: ${lowerBound.toFixed(2)} - ${upperBound.toFixed(
+          2
+        )} kWh. Possible sensor error.`,
+        {
           outlierValue: energy,
           expectedRange: { lower: lowerBound, upper: upperBound },
           errorType: "STATISTICAL_OUTLIER",
-        },
-      });
+        }
+      );
     }
   }
+
+  // Group consecutive days with sensor issues into ranges
+  const dailyIssues = Array.from(dailyIssuesMap.values()).sort(
+    (a, b) => a.date.getTime() - b.date.getTime()
+  );
+
+  if (dailyIssues.length === 0) {
+    return anomalies;
+  }
+
+  let currentGroup: DailyIssue[] = [dailyIssues[0]];
+
+  const flushGroup = () => {
+    if (currentGroup.length === 0) return;
+    const start = currentGroup[0];
+    const end = currentGroup[currentGroup.length - 1];
+
+    const totalDays = currentGroup.length;
+    const exampleMessage = start.messages[0];
+    const severity: "CRITICAL" | "WARNING" =
+      currentGroup.some((d) => d.severity === "CRITICAL") ? "CRITICAL" : "WARNING";
+
+    anomalies.push({
+      anomalyType: "SENSOR_ERROR",
+      severity,
+      description:
+        totalDays === 1
+          ? `Sensor error detected on ${start.date.toDateString()}. ${exampleMessage}`
+          : `Sensor errors detected for ${totalDays} consecutive days from ${start.date.toDateString()} to ${end.date.toDateString()}. Example: ${exampleMessage}`,
+      affectedStartDate: start.date,
+      affectedEndDate: end.date,
+      metadata: {
+        days: currentGroup.map((d) => ({
+          date: d.date,
+          severity: d.severity,
+          messages: d.messages,
+          metadata: d.metadata,
+        })),
+      },
+    });
+  };
+
+  for (let i = 1; i < dailyIssues.length; i++) {
+    const prev = currentGroup[currentGroup.length - 1];
+    const curr = dailyIssues[i];
+    const diffDays =
+      (curr.date.getTime() - prev.date.getTime()) / (1000 * 60 * 60 * 24);
+
+    if (diffDays === 1) {
+      // Consecutive day, extend current group
+      currentGroup.push(curr);
+    } else {
+      // Break in sequence, flush current group and start a new one
+      flushGroup();
+      currentGroup = [curr];
+    }
+  }
+
+  // Flush last group
+  flushGroup();
 
   return anomalies;
 }
@@ -301,15 +400,11 @@ export async function detectBelowAverageAnomalies(
  */
 export async function detectAllAnomalies(solarUnitId: string): Promise<void> {
   try {
-    // Get last 30 days of grouped data
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
+    // Get ALL grouped data for this solar unit 
     const records = await EnergyGenerationRecord.aggregate([
       {
         $match: {
           solarUnitId: new mongoose.Types.ObjectId(solarUnitId),
-          timestamp: { $gte: thirtyDaysAgo },
         },
       },
       {
@@ -327,7 +422,12 @@ export async function detectAllAnomalies(solarUnitId: string): Promise<void> {
       },
     ]);
 
-    if (records.length === 0) return;
+    if (records.length === 0) {
+      console.log(`No energy generation records found for solar unit ${solarUnitId}`);
+      return;
+    }
+
+    console.log(`Processing ${records.length} daily records for anomaly detection (solar unit ${solarUnitId})`);
 
     // Run all detection algorithms
     const [
@@ -354,6 +454,9 @@ export async function detectAllAnomalies(solarUnitId: string): Promise<void> {
     ];
 
     // Save anomalies to database (avoid duplicates)
+    let createdCount = 0;
+    let skippedCount = 0;
+    
     for (const anomaly of allAnomalies) {
       // Check if similar anomaly already exists
       const existing = await Anomaly.findOne({
@@ -368,10 +471,13 @@ export async function detectAllAnomalies(solarUnitId: string): Promise<void> {
           solarUnitId,
           ...anomaly,
         });
+        createdCount++;
+      } else {
+        skippedCount++;
       }
     }
 
-    console.log(`Detected ${allAnomalies.length} anomalies for solar unit ${solarUnitId}`);
+    console.log(`Anomaly detection complete: ${createdCount} new anomalies created, ${skippedCount} duplicates skipped (total detected: ${allAnomalies.length})`);
   } catch (error) {
     console.error(`Error detecting anomalies for solar unit ${solarUnitId}:`, error);
   }
