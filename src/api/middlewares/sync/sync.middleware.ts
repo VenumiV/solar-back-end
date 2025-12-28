@@ -81,19 +81,12 @@ export const syncMiddleware = async (
 
       await EnergyGenerationRecord.insertMany(recordsToInsert);
       console.log(`Synced ${recordsToInsert.length} new energy generation records`);
-    } else {
-      console.log("No new records to sync");
-    }
 
-    // Always run anomaly detection after sync (even if no new records)
-    // This ensures anomalies are detected for all existing data
-    try {
-      console.log(`Running anomaly detection for solar unit ${solarUnit.serialNumber}...`);
+      // After syncing new records, run anomaly detection for this solar unit
       await detectAllAnomalies(solarUnit._id.toString());
       console.log(`Anomaly detection completed for solar unit ${solarUnit.serialNumber}`);
-    } catch (detectionError) {
-      console.error(`Error running anomaly detection:`, detectionError);
-      // Don't fail the request if detection fails, just log it
+    } else {
+      console.log("No new records to sync");
     }
 
     next();

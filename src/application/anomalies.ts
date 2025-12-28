@@ -38,7 +38,9 @@ export const getAnomaliesForUser = async (
       query.severity = severity;
     }
     if (resolved !== undefined) {
-      query.resolved = resolved === "true";
+      // Handle both string "true"/"false" and boolean true/false
+      const resolvedStr = String(resolved);
+      query.resolved = resolvedStr === "true";
     }
 
     const anomalies = await Anomaly.find(query)
@@ -110,9 +112,9 @@ export const getAnomalyStatistics = async (
 
     const { resolved } = req.query;
     const query: any = { solarUnitId: { $in: solarUnitIds } };
+      query.resolved = resolved === "true";
     
     if (resolved !== undefined) {
-      query.resolved = resolved === "true";
     }
 
     // Get all anomalies

@@ -29,11 +29,11 @@ anomaliesRouter
 anomaliesRouter
   .route("/:id/resolve")
   .patch(authenticationMiddleware, resolveAnomaly);
-
+anomaliesRouter
+  .route("/:id/resolve")
+  .patch(authenticationMiddleware, resolveAnomaly);
 
 // Admin endpoints
-// GET /api/anomalies?type=MECHANICAL&severity=CRITICAL&resolved=false&solarUnitId=<id>
-// Requires admin role
 anomaliesRouter
   .route("/")
   .get(authenticationMiddleware, authorizationMiddleware, getAllAnomalies);
