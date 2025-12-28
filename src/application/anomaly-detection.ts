@@ -301,15 +301,11 @@ export async function detectBelowAverageAnomalies(
  */
 export async function detectAllAnomalies(solarUnitId: string): Promise<void> {
   try {
-    // Get last 30 days of grouped data
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
+    // Get ALL grouped data for this solar unit 
     const records = await EnergyGenerationRecord.aggregate([
       {
         $match: {
           solarUnitId: new mongoose.Types.ObjectId(solarUnitId),
-          timestamp: { $gte: thirtyDaysAgo },
         },
       },
       {
@@ -327,7 +323,12 @@ export async function detectAllAnomalies(solarUnitId: string): Promise<void> {
       },
     ]);
 
-    if (records.length === 0) return;
+    if (records.length === 0) {
+      console.log(`No energy generation records found for solar unit ${solarUnitId}`);
+      return;
+    }
+
+    console.log(`Processing ${records.length} daily records for anomaly detection (solar unit ${solarUnitId})`);
 
     // Run all detection algorithms
     const [
@@ -354,6 +355,9 @@ export async function detectAllAnomalies(solarUnitId: string): Promise<void> {
     ];
 
     // Save anomalies to database (avoid duplicates)
+    let createdCount = 0;
+    let skippedCount = 0;
+    
     for (const anomaly of allAnomalies) {
       // Check if similar anomaly already exists
       const existing = await Anomaly.findOne({
@@ -368,10 +372,13 @@ export async function detectAllAnomalies(solarUnitId: string): Promise<void> {
           solarUnitId,
           ...anomaly,
         });
+        createdCount++;
+      } else {
+        skippedCount++;
       }
     }
 
-    console.log(`Detected ${allAnomalies.length} anomalies for solar unit ${solarUnitId}`);
+    console.log(`Anomaly detection complete: ${createdCount} new anomalies created, ${skippedCount} duplicates skipped (total detected: ${allAnomalies.length})`);
   } catch (error) {
     console.error(`Error detecting anomalies for solar unit ${solarUnitId}:`, error);
   }

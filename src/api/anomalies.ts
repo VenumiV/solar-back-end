@@ -9,6 +9,7 @@ import {
 
 } from "../application/anomalies";
 import { authenticationMiddleware } from "./middlewares/authentication-middleware";
+import { authorizationMiddleware } from "./middlewares/authorization-middleware";
 
 const anomaliesRouter = express.Router();
 
@@ -35,7 +36,7 @@ anomaliesRouter
 // Admin endpoints
 anomaliesRouter
   .route("/")
-  .get(authenticationMiddleware, getAllAnomalies);
+  .get(authenticationMiddleware, authorizationMiddleware, getAllAnomalies);
 
 export default anomaliesRouter;
 

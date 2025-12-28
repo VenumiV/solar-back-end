@@ -12,7 +12,9 @@ export const getAllSolarUnits = async (
   next: NextFunction
 ) => {
   try {
-    const solarUnits = await SolarUnit.find();
+    const solarUnits = await SolarUnit.find()
+      .populate("userId", "firstName lastName email")
+      .sort({ createdAt: -1 });
     res.status(200).json(solarUnits);
   } catch (error) {
     next(error);
@@ -39,12 +41,20 @@ export const createSolarUnit = async (
   try {
     const data: z.infer<typeof CreateSolarUnitDto> = req.body;
 
+    // Validate userId if provided
+    if (data.userId) {
+      const user = await User.findById(data.userId);
+      if (!user) {
+        throw new ValidationError("User not found");
+      }
+    }
+
     const newSolarUnit = {
       serialNumber: data.serialNumber,
       installationDate: new Date(data.installationDate),
       capacity: data.capacity,
       status: data.status,
-      //userId: data.userId,
+      ...(data.userId && { userId: data.userId }),
     };
 
     const createdSolarUnit = await SolarUnit.create(newSolarUnit);
@@ -111,20 +121,34 @@ export const updateSolarUnit = async (
   next: NextFunction
 ) => {
   const { id } = req.params;
-  const { serialNumber, installationDate, capacity, status,userId } = req.body;
+  const { serialNumber, installationDate, capacity, status, userId } = req.body;
   const solarUnit = await SolarUnit.findById(id);
 
   if (!solarUnit) {
     throw new NotFoundError("Solar unit not found");
   }
 
-  const updatedSolarUnit = await SolarUnit.findByIdAndUpdate(id, {
+  // Validate userId if provided
+  if (userId) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new ValidationError("User not found");
+    }
+  }
+
+  const updateData: any = {
     serialNumber,
-    installationDate,
+    installationDate: new Date(installationDate),
     capacity,
     status,
-  
-  });
+  };
+
+  // Only update userId if it's provided (allows unassigning by passing null/empty)
+  if (userId !== undefined) {
+    updateData.userId = userId || null;
+  }
+
+  const updatedSolarUnit = await SolarUnit.findByIdAndUpdate(id, updateData, { new: true });
 
   res.status(200).json(updatedSolarUnit);
 };
