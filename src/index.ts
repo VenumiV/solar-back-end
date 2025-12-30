@@ -1,6 +1,7 @@
-
 import "dotenv/config";
 import express from "express";
+import cors from "cors";
+import { clerkMiddleware } from "@clerk/express";
 import { globalErrorHandler } from "./api/middlewares/global-error-handling-middleware";
 import { loggerMiddleware } from "./api/middlewares/logger-middleware";
 import solarUnitRouter from "./api/solar-units";
@@ -9,16 +10,41 @@ import anomaliesRouter from "./api/anomalies";
 import energyGenerationRecordRouter from "./api/energy-generation-record";
 import invoicesRouter from "./api/invoices";
 import paymentRouter from "./api/payment";
-import { connectDB } from "./infrastructure/db";
-import cors from "cors";
 import webhooksRouter from "./api/webhooks";
-import { clerkMiddleware } from "@clerk/express";
+import { connectDB } from "./infrastructure/db";
 import { handleStripeWebhook } from "./application/payment";
 import { initializeScheduler } from "./infrastructure/scheduler";
 
-
 const server = express();
-server.use(cors({ origin: "http://localhost:5173" }));
+
+// CORS Configuration - UPDATED
+const allowedOrigins = [
+  process.env.FRONTEND_URL || "https://fed-4-venumi.netlify.app",
+  "http://localhost:5173",
+  "http://localhost:3000"
+].filter(Boolean);
+
+server.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, curl)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
+}));
+
+// Handle preflight requests
+server.options('*', cors());
+
 server.use(loggerMiddleware);
 
 // Stripe webhook route MUST be before express.json() middleware
@@ -51,9 +77,14 @@ server.use(globalErrorHandler);
 connectDB().then(() => {
   // Initialize scheduler after DB connection
   initializeScheduler();
+  console.log(`Database connected successfully`);
+  console.log(`Allowed CORS origins:`, allowedOrigins);
 });
 
 const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`Frontend URL: ${process.env.FRONTEND_URL}`);
 });
+//jnirjir
