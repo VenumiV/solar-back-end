@@ -112,9 +112,11 @@ export const getAnomalyStatistics = async (
 
     const { resolved } = req.query;
     const query: any = { solarUnitId: { $in: solarUnitIds } };
-      query.resolved = resolved === "true";
     
     if (resolved !== undefined) {
+      // Handle both string "true"/"false" and boolean true/false
+      const resolvedStr = String(resolved);
+      query.resolved = resolvedStr === "true";
     }
 
     // Get all anomalies
