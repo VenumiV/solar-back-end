@@ -1,0 +1,3 @@
+- Front-end - https://fed-4-venumi.netlify.app
+- Back-end - https://solar-back-end-vt80.onrender.com
+- Data-API - https://solar-data-api-venumi.onrender.com
