@@ -261,7 +261,7 @@ export async function detectSensorErrors(
  * 5. BELOW_AVERAGE Anomaly Detection (existing method)
  * Detects days significantly below the window average
  */
-export async function detectBelowAverageAnomalies(
+/*export async function detectBelowAverageAnomalies(
   solarUnitId: string,
   records: any[],
   thresholdPercent: number = 40
@@ -295,7 +295,7 @@ export async function detectBelowAverageAnomalies(
 
   return anomalies;
 }
-
+*/
 /**
  * Main detection function - runs all detection algorithms
  */
@@ -336,13 +336,13 @@ export async function detectAllAnomalies(solarUnitId: string): Promise<void> {
       temperatureAnomalies,
       shadingAnomalies,
       sensorErrors,
-      belowAverageAnomalies,
+     // belowAverageAnomalies,
     ] = await Promise.all([
       detectMechanicalAnomalies(solarUnitId, records),
       detectTemperatureAnomalies(solarUnitId, records),
       detectShadingAnomalies(solarUnitId, records),
       detectSensorErrors(solarUnitId, records),
-      detectBelowAverageAnomalies(solarUnitId, records),
+      //detectBelowAverageAnomalies(solarUnitId, records),
     ]);
 
     // Combine all anomalies
@@ -351,7 +351,7 @@ export async function detectAllAnomalies(solarUnitId: string): Promise<void> {
       ...temperatureAnomalies,
       ...shadingAnomalies,
       ...sensorErrors,
-      ...belowAverageAnomalies,
+     // ...belowAverageAnomalies,
     ];
 
     // Save anomalies to database (avoid duplicates)

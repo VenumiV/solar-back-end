@@ -184,7 +184,7 @@ function getAnomalyTypeDisplayName(type: string): string {
     TEMPERATURE: "Temperature",
     SHADING: "Shading",
     SENSOR_ERROR: "Sensor Error",
-    BELOW_AVERAGE: "Below Average",
+   // BELOW_AVERAGE: "Below Average",
   };
   return displayNames[type] || type;
 }

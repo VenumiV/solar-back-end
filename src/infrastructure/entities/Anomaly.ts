@@ -9,7 +9,7 @@ const anomalySchema = new mongoose.Schema({
   anomalyType: {
     type: String,
     required: true,
-    enum: ["MECHANICAL", "TEMPERATURE", "SHADING", "SENSOR_ERROR", "BELOW_AVERAGE"],
+    enum: ["MECHANICAL", "TEMPERATURE", "SHADING", "SENSOR_ERROR"]
   },
   severity: {
     type: String,
