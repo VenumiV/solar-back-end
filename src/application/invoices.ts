@@ -65,8 +65,7 @@ export const getInvoiceById = async (
     }
 
     const invoice = await Invoice.findById(id)
-      .populate("solarUnitId", "serialNumber capacity")
-      .populate("userId", "firstName lastName email");
+    .populate("solarUnitId", "serialNumber capacity");
 
     if (!invoice) {
       throw new NotFoundError("Invoice not found");
@@ -76,6 +75,9 @@ export const getInvoiceById = async (
     if (invoice.userId.toString() !== user._id.toString()) {
       throw new UnauthorizedError("You don't have access to this invoice");
     }
+
+    // Now populate userId for the response
+    await invoice.populate("userId", "firstName lastName email");
 
     res.status(200).json(invoice);
   } catch (error) {

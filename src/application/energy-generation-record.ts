@@ -93,11 +93,13 @@ export const getCapacityFactorBySolarUnitId = async (
     );
 
     // Calculate theoretical maximum energy
-    // Solar panels only generate during daylight hours (8 AM - 5 PM = 10 hours per day)
-    // Capacity is in kW, so theoretical max = capacity (kW) × daylight hours per day × days
-    const daylightHoursPerDay = 8; // 9 AM to 4 PM (inclusive) = 8 hours
+    // Solar panels only generate during daylight hours
+    // Capacity is stored in W (watts), convert to kW by dividing by 1000
+    // Theoretical max = capacity (W) / 1000 (to kW) × daylight hours per day × days
+    const capacityInKW = solarUnit.capacity / 1000; // Convert from W to kW
+    const daylightHoursPerDay = 8; // 8 hours of effective daylight
     const hoursInPeriod = daysToCalculate * daylightHoursPerDay;
-    const theoreticalMaximum = solarUnit.capacity * hoursInPeriod; // in kWh
+    const theoreticalMaximum = capacityInKW * hoursInPeriod; // in kWh
 
     // Calculate capacity factor as percentage
     const capacityFactor = theoreticalMaximum > 0
@@ -132,9 +134,11 @@ export const getCapacityFactorBySolarUnitId = async (
 
     // Calculate daily capacity factors
     const dailyData = dailyCapacityFactors.map((day) => {
-      // Solar panels only generate during daylight hours (8 AM - 5 PM = 10 hours per day)
-      const daylightHoursPerDay = 10;
-      const dailyTheoretical = solarUnit.capacity * daylightHoursPerDay;
+      // Solar panels only generate during daylight hours
+      // Capacity is stored in W (watts), convert to kW by dividing by 1000
+      const capacityInKW = solarUnit.capacity / 1000; // Convert from W to kW
+      const daylightHoursPerDay = 10; // 10 hours of effective daylight per day
+      const dailyTheoretical = capacityInKW * daylightHoursPerDay; // in kWh
       const dailyCapacityFactor = dailyTheoretical > 0
         ? (day.totalEnergy / dailyTheoretical) * 100
         : 0;

@@ -20,8 +20,7 @@ const server = express();
 // CORS Configuration - UPDATED
 const allowedOrigins = [
   process.env.FRONTEND_URL || "https://fed-4-venumi.netlify.app",
-  "http://localhost:5173",
-  "http://localhost:3000"
+  "http://localhost:5173"
 ].filter(Boolean);
 
 server.use(cors({
@@ -43,7 +42,7 @@ server.use(cors({
 }));
 
 // Handle preflight requests
-server.options('*', cors());
+//server.options('*', cors());
 
 server.use(loggerMiddleware);
 
@@ -87,4 +86,3 @@ server.listen(PORT, () => {
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`Frontend URL: ${process.env.FRONTEND_URL}`);
 });
-//jnirjir
