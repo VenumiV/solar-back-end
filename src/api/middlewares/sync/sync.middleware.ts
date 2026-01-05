@@ -48,9 +48,13 @@ export const syncMiddleware = async (
     }
 
     // Fetch latest records from data API
+    //const dataAPIResponse = await fetch(
+    //  `http://localhost:8001/api/energy-generation-records/solar-unit/${solarUnit.serialNumber}`
+    //);
     const dataAPIResponse = await fetch(
-      `http://localhost:8001/api/energy-generation-records/solar-unit/${solarUnit.serialNumber}`
+      `${process.env.API_URL}/api/energy-generation-records/solar-unit/${solarUnit.serialNumber}`
     );
+    
     if (!dataAPIResponse.ok) {
       throw new Error("Failed to fetch energy generation records from data API");
     }
@@ -92,6 +96,6 @@ export const syncMiddleware = async (
     next();
   } catch (error) {
     console.error("Sync middleware error:", error);
-    next(error);
+    next();
   }
 };
