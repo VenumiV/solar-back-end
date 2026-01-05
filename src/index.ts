@@ -19,7 +19,7 @@ const server = express();
 
 // CORS Configuration - UPDATED
 const allowedOrigins = [
-  process.env.FRONTEND_URL || "https://fed-4-venumi.netlify.app",
+  process.env.FRONTEND_URL || "https://fed-front-end-venumi.netlify.app",
   "http://localhost:5173"
 ].filter(Boolean);
 
